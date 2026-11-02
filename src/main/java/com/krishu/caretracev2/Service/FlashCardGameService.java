@@ -17,8 +17,6 @@ import org.springframework.web.server.ResponseStatusException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
-import java.util.stream.Collectors;
 
 @Service
 public class FlashCardGameService {
@@ -107,6 +105,7 @@ public class FlashCardGameService {
             response.setNextQuestion(null);
         }else{
             response.setCompleted(false);
+            session.setCurrOptions(null);
             response.setNextQuestion(buildQuestion(session));
         }
         try {
