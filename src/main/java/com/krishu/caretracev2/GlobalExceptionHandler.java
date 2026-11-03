@@ -70,4 +70,10 @@ public class GlobalExceptionHandler {
         ErrorResponse errorResponse=new ErrorResponse(409,exp.getMessage());
         return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
     }
+
+    @ExceptionHandler(InvalidFileException.class)
+    public ResponseEntity<ErrorResponse> InvalidFile(InvalidFileException exp){
+        ErrorResponse errorResponse=new ErrorResponse(400,exp.getMessage());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
+    }
 }

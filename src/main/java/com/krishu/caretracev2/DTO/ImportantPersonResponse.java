@@ -10,4 +10,5 @@ public class ImportantPersonResponse {
     private String name;
     private String relation;
     private Long phoneNo;
+    private String photoUrl;
 }

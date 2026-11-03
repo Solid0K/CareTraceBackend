@@ -16,6 +16,6 @@ public class ImportantPerson {
     private String name;
     private String relation;
     private Long phoneNo;
-    private byte[] photo;
+    private String photoKey;
     private String patientId;
 }
