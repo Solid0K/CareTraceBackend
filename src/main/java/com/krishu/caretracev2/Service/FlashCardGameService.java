@@ -27,6 +27,9 @@ public class FlashCardGameService {
     private final PatientRepo patientRepo;
     private final PhotoStorageService photoStorageService;
 
+    private static final List<String> filler_relation=List.of("Friend", "Neighbour", "Cousin", "Uncle"
+            , "Aunt", "Brother", "Sister", "Colleague");
+
     private final int MAX_OPTIONS=4;
 
     public FlashCardGameService(FlashCardGameSessionRepo flashCardGameSessionRepo,
@@ -83,7 +86,7 @@ public class FlashCardGameService {
 
         String currentPersonId=session.getPersonIds().get(index);
         if(!currentPersonId.equals(request.getPersonId())){
-            throw new IllegalArgumentException("This is not current question");
+            throw new WrongQuestionException("This is not current question");
         }
 
         ImportantPerson currentImportantPerson=importantPersonRepo.findById(currentPersonId).
@@ -149,12 +152,25 @@ public class FlashCardGameService {
 
         List<String> options = session.getCurrOptions();
         if (options == null || options.isEmpty()) {
-            List<String> relations = persons.stream().map(ImportantPerson::getRelation)
+            List<String> relations = new ArrayList<>(persons.stream().map(ImportantPerson::getRelation)
                     .filter(relation -> relation != null && !relation.isBlank())
-                    .distinct().filter(relation -> !relation.equalsIgnoreCase(person.getRelation())).toList();
+                    .distinct().filter(relation -> !relation.equalsIgnoreCase(person.getRelation())).toList());
             Collections.shuffle(relations);
-            options = new ArrayList<>();
-            options.addAll(relations.stream().limit(MAX_OPTIONS - 1).toList());
+            List<String> wrongOptions=new ArrayList<>(relations.stream().limit(MAX_OPTIONS - 1).toList());
+            if(wrongOptions.size()<MAX_OPTIONS-1){
+                List<String> fillers=new ArrayList<>(filler_relation);
+                for(String fillerRelation:fillers){
+                    if(wrongOptions.size()>=MAX_OPTIONS-1){
+                        break;
+                    }
+                    boolean clashes=fillerRelation.equalsIgnoreCase(person.getRelation()) || wrongOptions.stream()
+                            .anyMatch(o->o.equalsIgnoreCase(fillerRelation));
+                    if(!clashes){
+                        wrongOptions.add(fillerRelation);
+                    }
+                }
+            }
+            options=new ArrayList<>(wrongOptions);
             options.add(person.getRelation());
             Collections.shuffle(options);
             session.setCurrOptions(options);

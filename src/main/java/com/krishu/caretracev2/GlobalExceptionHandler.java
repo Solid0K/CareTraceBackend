@@ -76,4 +76,10 @@ public class GlobalExceptionHandler {
         ErrorResponse errorResponse=new ErrorResponse(400,exp.getMessage());
         return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
     }
+
+    @ExceptionHandler(WrongQuestionException.class)
+    public ResponseEntity<ErrorResponse> WrongQuestion(WrongQuestionException exp){
+        ErrorResponse errorResponse=new ErrorResponse(400,exp.getMessage());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
+    }
 }
