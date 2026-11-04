@@ -10,7 +10,7 @@ import java.util.List;
 public class FlashCardQuestionResponse {
     private String sessionId;
     private String personId;
-    private byte[] photo;
+    private String photoUrl;
     private List<String> options;
     private int questionNumber;
     private int totalQuestions;

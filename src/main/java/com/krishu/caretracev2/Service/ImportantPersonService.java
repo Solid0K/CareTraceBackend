@@ -27,12 +27,14 @@ public class ImportantPersonService {
     private final ImportantPersonRepo importantPersonRepo;
     private final CareTakerRepo careTakerRepo;
     private final PatientRepo patientRepo;
+    private final PhotoStorageService photoStorageService;
 
     public ImportantPersonService(ImportantPersonRepo importantPersonRepo, CareTakerRepo careTakerRepo
-            , PatientRepo patientRepo) {
+            , PatientRepo patientRepo,PhotoStorageService photoStorageService) {
         this.importantPersonRepo = importantPersonRepo;
         this.careTakerRepo = careTakerRepo;
         this.patientRepo = patientRepo;
+        this.photoStorageService=photoStorageService;
     }
 
     public ImportantPersonResponse createImportantPerson(ImportantPersonRequest request
@@ -49,7 +51,8 @@ public class ImportantPersonService {
         importantPerson.setPhoneNo(request.getPhoneNo());
         importantPerson.setPatientId(patient.getId());
         if(photo!=null && !photo.isEmpty()){
-            importantPerson.setPhoto(photo.getBytes());
+            importantPerson.setPhotoKey(photoStorageService.
+                    uploadPhoto(photo, "patients/"+patientId+"/people/"));
         }
         ImportantPerson savedImportantPerson=importantPersonRepo.save(importantPerson);
         return mapToImportantPersonResponse(savedImportantPerson);
@@ -78,8 +81,15 @@ public class ImportantPersonService {
         importantPerson.setName(request.getName());
         importantPerson.setRelation(request.getRelation());
         importantPerson.setPhoneNo(request.getPhoneNo());
-        importantPerson.setPhoto(photo.getBytes());
+        String oldKey=importantPerson.getPhotoKey();
+        if(photo!=null && !photo.isEmpty()){
+            importantPerson.setPhotoKey(photoStorageService.
+                    uploadPhoto(photo,"patients/"+patientId+"/people/"));
+        }
         ImportantPerson savedPerson=importantPersonRepo.save(importantPerson);
+        if(photo!=null && !photo.isEmpty()){
+            photoStorageService.deletePhoto(oldKey);
+        }
         return mapToImportantPersonResponse(savedPerson);
     }
 
@@ -95,6 +105,7 @@ public class ImportantPersonService {
             throw new NotRelatedException("Person and Patient are not related");
         }
         importantPersonRepo.delete(person);
+        photoStorageService.deletePhoto(person.getPhotoKey());
     }
 
     public List<ImportantPersonResponse> getPatientImportantPerson(Authentication authentication) {
@@ -107,8 +118,8 @@ public class ImportantPersonService {
 
     public List<ImportantPerson> getPersonsPhotos(String patientId){;
         List<ImportantPerson> importantPersons=importantPersonRepo.findByPatientId(patientId);
-        return importantPersons.stream().filter(person->person.getPhoto()!=null && person.getPhoto()
-                .length>0).collect(Collectors.toCollection(ArrayList::new));
+        return importantPersons.stream().filter(person->person.getPhotoKey()!=null)
+                .collect(Collectors.toCollection(ArrayList::new));
     }
 
     private ImportantPersonResponse mapToImportantPersonResponse(ImportantPerson importantPerson){
@@ -117,20 +128,12 @@ public class ImportantPersonService {
         response.setId(importantPerson.getId());
         response.setPhoneNo(importantPerson.getPhoneNo());
         response.setRelation(importantPerson.getRelation());
+        response.setPhotoUrl(photoStorageService.photoUrl(importantPerson.getPhotoKey()));
         return response;
     }
 
     private CareTaker getCareTaker(Authentication authentication){
         return careTakerRepo.findByUserId(authentication.getName()).orElseThrow(()
                 ->new NotFoundException("CareTaker not found"));
-    }
-
-    private PersonForFlashCard mapToPersonFlashCard(ImportantPerson person){
-        PersonForFlashCard response=new PersonForFlashCard();
-        response.setPersonId(person.getId());
-        response.setPhoto(person.getPhoto());
-        response.setRelation(person.getRelation());
-        response.setPersonName(person.getName());
-        return response;
     }
 }

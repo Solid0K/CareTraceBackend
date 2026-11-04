@@ -15,6 +15,7 @@ import software.amazon.awssdk.services.rekognition.model.CompareFacesRequest;
 import software.amazon.awssdk.services.rekognition.model.CompareFacesResponse;
 import software.amazon.awssdk.services.rekognition.model.Image;
 import software.amazon.awssdk.services.rekognition.model.S3Object;
+import software.amazon.awssdk.services.s3.S3Client;
 
 import java.util.List;
 
@@ -24,10 +25,12 @@ public class FaceRecognitionService {
     private final RekognitionClient rekognitionClient;
     private final ImportantPersonRepo importantPersonRepo;
     private final PatientRepo patientRepo;
+
     @Value("${s3.bucket}")
     private String s3Bucket;
 
-    public FaceRecognitionService(RekognitionClient rekognitionClient,ImportantPersonRepo importantPersonRepo,PatientRepo patientRepo){
+    public FaceRecognitionService(RekognitionClient rekognitionClient, ImportantPersonRepo
+            importantPersonRepo,PatientRepo patientRepo){
         this.rekognitionClient=rekognitionClient;
         this.importantPersonRepo=importantPersonRepo;
         this.patientRepo=patientRepo;
@@ -44,15 +47,18 @@ public class FaceRecognitionService {
     }
 
     public FaceRecognitionResponse recognisePerson(Authentication authentication , byte[] newImage){
-        Patient patient=patientRepo.findByUserId(authentication.getName()).orElseThrow(()->new NotFoundException("Patient not found"));
+        Patient patient=patientRepo.findByUserId(authentication.getName()).
+                orElseThrow(()->new NotFoundException("Patient not found"));
         List<ImportantPerson> persons=importantPersonRepo.findByPatientId(patient.getId());
         Float highestSimilarity=0F;
         ImportantPerson bestMatchPerson=null;
         for(ImportantPerson person:persons){
-            if(person.getPhoto()==null){
+            if(person.getPhotoKey()==null){
                 continue;
             }
-            Float similarity=compareImages(person.getPhoto(),newImage);
+            Image newPhoto=fromByteToImage(newImage);
+            Image savedPhoto=getImageFromKey(person.getPhotoKey());
+            Float similarity=compareImages(savedPhoto,newPhoto);
             if(similarity>highestSimilarity){
                 highestSimilarity=similarity;
                 bestMatchPerson=person;
@@ -62,12 +68,14 @@ public class FaceRecognitionService {
             return null;
         }
 
-        FaceRecognitionResponse response=new FaceRecognitionResponse(bestMatchPerson.getName(),bestMatchPerson.getRelation(),highestSimilarity);
+        FaceRecognitionResponse response=new FaceRecognitionResponse(bestMatchPerson.getName()
+                ,bestMatchPerson.getRelation(),highestSimilarity);
         return response;
     }
 
     private Image fromByteToImage(byte[] image){
-        return Image.builder().bytes(SdkBytes.fromByteArray(image)).build();
+        return Image.builder()
+                .bytes(SdkBytes.fromByteArray(image)).build();
     }
 
     private Image getImageFromKey(String key){

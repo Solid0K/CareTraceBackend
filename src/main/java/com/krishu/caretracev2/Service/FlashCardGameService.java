@@ -25,16 +25,19 @@ public class FlashCardGameService {
     private final ImportantPersonService importantPersonService;
     private final ImportantPersonRepo importantPersonRepo;
     private final PatientRepo patientRepo;
+    private final PhotoStorageService photoStorageService;
 
     private final int MAX_OPTIONS=4;
 
     public FlashCardGameService(FlashCardGameSessionRepo flashCardGameSessionRepo,
                                 ImportantPersonService importantPersonService,
-                                PatientRepo patientRepo,ImportantPersonRepo importantPersonRepo){
+                                PatientRepo patientRepo,
+                                ImportantPersonRepo importantPersonRepo,PhotoStorageService photoStorageService){
         this.flashCardGameSessionRepo=flashCardGameSessionRepo;
         this.importantPersonService=importantPersonService;
         this.patientRepo=patientRepo;
         this.importantPersonRepo=importantPersonRepo;
+        this.photoStorageService=photoStorageService;
     }
 
     public FlashCardQuestionResponse startGame(Authentication authentication){
@@ -160,7 +163,7 @@ public class FlashCardGameService {
         FlashCardQuestionResponse response=new FlashCardQuestionResponse();
         response.setTotalQuestions(session.getPersonIds().size());
         response.setQuestionNumber(session.getQuestinIndex()+1);
-        response.setPhoto(person.getPhoto());
+        response.setPhotoUrl(photoStorageService.photoUrl(person.getPhotoKey()));
         response.setPersonId(person.getId());
         response.setOptions(options);
         return response;
