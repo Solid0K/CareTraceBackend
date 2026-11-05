@@ -51,7 +51,7 @@ public class ImportantPersonController {
     @DeleteMapping("/delete/{patientId}/{importantPersonId}")
     public void deleteImportantPerson(@PathVariable String patientId,@PathVariable
     String importantPersonId,Authentication authentication){
-        importantPersonService.deletePerson(patientId,importantPersonId,authentication);
+        importantPersonService.deletePerson(importantPersonId,patientId,authentication);
     }
 
     @GetMapping("/patient/me")
