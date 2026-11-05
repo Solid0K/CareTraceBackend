@@ -10,4 +10,5 @@ public class ImportantPlaceResponse {
     private String name;
     private String description;
     private String patientId;
+    private String photoUrl;
 }

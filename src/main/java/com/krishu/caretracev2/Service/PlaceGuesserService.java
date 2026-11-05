@@ -32,21 +32,25 @@ public class PlaceGuesserService {
     private final PlaceGuesserRepo placeGuesserRepo;
     private final ImportantPlaceRepo placeRepo;
     private final PatientRepo patientRepo;
+    private final PhotoStorageService photoStorageService;
 
     private final Integer MAX_QUESTION=5;
     private final Integer MAX_OPTION=4;
 
     public PlaceGuesserService(PlaceGuesserRepo placeGuesserRepo,ImportantPlaceRepo placeRepo
-            ,PatientRepo patientRepo){
+            ,PatientRepo patientRepo,PhotoStorageService photoStorageService){
         this.placeGuesserRepo=placeGuesserRepo;
         this.placeRepo=placeRepo;
         this.patientRepo=patientRepo;
+        this.photoStorageService=photoStorageService;
     }
 
     public PlaceGuesserQuestionResponse startGame(Authentication authentication){
         Patient patient=patientRepo.findByUserId(authentication.getName())
                 .orElseThrow(()->new NotFoundException("Patient not found"));
-        List<ImportantPlace> places=placeRepo.findByPatientId(patient.getId());
+        List<ImportantPlace> places=placeRepo.findByPatientId(patient.getId()).stream()
+                .filter(place->place.getPhotoKey()!=null)
+                .toList();
         List<ImportantPlace> uniquePlace=new ArrayList<>(new LinkedHashSet<>(places.stream().
                 map(ImportantPlace::getName).toList().stream().
                 map(name->places.stream().
@@ -54,7 +58,7 @@ public class PlaceGuesserService {
                                 equals(name)).findFirst().orElseThrow()).toList()));
 
         if(uniquePlace.size()<2){
-            throw new IllegalArgumentException("At least two places with " +
+            throw new IllegalArgumentException("At least two places with photos and " +
                     "different names are required");
         }
         Collections.shuffle(uniquePlace);
@@ -166,9 +170,9 @@ public class PlaceGuesserService {
         List<String> options=session.getCurrOptions();
 
         if(options==null || options.isEmpty()){
-            List<String> placesName=importantPlaces.stream().map(ImportantPlace::getName)
+            List<String> placesName=new ArrayList<>(importantPlaces.stream().map(ImportantPlace::getName)
                     .filter(name->name!=null && !name.isBlank())
-                    .distinct().filter(name->!name.equalsIgnoreCase(place.getName())).toList();
+                    .distinct().filter(name->!name.equalsIgnoreCase(place.getName())).toList());
             Collections.shuffle(placesName);
             options=new ArrayList<>();
             options.addAll(placesName.stream().limit(MAX_OPTION-1).toList());
@@ -181,7 +185,7 @@ public class PlaceGuesserService {
         PlaceGuesserQuestionResponse response=new PlaceGuesserQuestionResponse();
         response.setOptions(options);
         response.setPlaceId(place.getId());
-        response.setPlacePhoto(place.getPhoto());
+        response.setPhotoUrl(photoStorageService.photoUrl(place.getPhotoKey()));
         response.setQuestionNo(session.getCurrQuestionIndex()+1);
         response.setTotalQuestions(session.getTotalQuestions());
         return response;

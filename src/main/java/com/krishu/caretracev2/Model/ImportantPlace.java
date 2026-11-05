@@ -15,5 +15,5 @@ public class ImportantPlace {
     private String patientId;
     private String name;
     private String description;
-    private byte[] photo;
+    private String photoKey;
 }

@@ -12,6 +12,6 @@ public class PlaceGuesserQuestionResponse {
     private Integer questionNo;
     private Integer totalQuestions;
     private String placeId;
-    private byte[] placePhoto;
+    private String photoUrl;
     private List<String> options;
 }

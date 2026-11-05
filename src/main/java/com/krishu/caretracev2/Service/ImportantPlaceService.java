@@ -24,12 +24,14 @@ public class ImportantPlaceService {
     private final ImportantPlaceRepo importantPlaceRepo;
     private final CareTakerRepo careTakerRepo;
     private final PatientRepo patientRepo;
+    private final PhotoStorageService photoStorageService;
 
     public ImportantPlaceService(ImportantPlaceRepo placeRepo, CareTakerRepo careTakerRepo
-            , PatientRepo patientRepo){
+            , PatientRepo patientRepo,PhotoStorageService photoStorageService){
         this.importantPlaceRepo=placeRepo;
         this.careTakerRepo=careTakerRepo;
         this.patientRepo=patientRepo;
+        this.photoStorageService=photoStorageService;
     }
 
 
@@ -54,10 +56,13 @@ public class ImportantPlaceService {
         place.setDescription(request.getDescription());
         place.setName(request.getName());
         place.setPatientId(patientId);
-        place.setPhoto(photo);
-
-        ImportantPlace savedPlace=importantPlaceRepo.save(place);
-        return mapToPlaceResponse(savedPlace);
+        place.setPhotoKey(photoStorageService.uploadPhoto(photoFile,"patients/" + patientId + "/places/"));
+        try{
+            return mapToPlaceResponse(importantPlaceRepo.save(place));
+        }catch(RuntimeException e){
+            photoStorageService.deletePhoto(place.getPhotoKey());
+            throw e;
+        }
     }
 
     public List<ImportantPlaceResponse> getAllImportantPlaces(Authentication authentication
@@ -108,6 +113,7 @@ public class ImportantPlaceService {
             throw new UnauthorizedException("You dont have authority for this patient");
         }
         importantPlaceRepo.delete(place);
+        photoStorageService.deletePhoto(place.getPhotoKey());
     }
 
     private ImportantPlaceResponse mapToPlaceResponse(ImportantPlace place){
@@ -116,6 +122,7 @@ public class ImportantPlaceService {
         response.setName(place.getName());
         response.setDescription(place.getDescription());
         response.setPatientId(place.getPatientId());
+        response.setPhotoUrl(photoStorageService.photoUrl(place.getPhotoKey()));
         return response;
     }
 }
