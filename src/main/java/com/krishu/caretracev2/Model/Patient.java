@@ -19,4 +19,5 @@ public class Patient {
     private Integer age;
     private PreferredLanguage preferred_language;
     private String careTakerId;
+    private String photoKey;
 }

@@ -4,9 +4,11 @@ import com.krishu.caretracev2.DTO.PatientMakingRequest;
 import com.krishu.caretracev2.DTO.PatientResponse;
 import com.krishu.caretracev2.DTO.PatientUpdateRequest;
 import com.krishu.caretracev2.Service.PatientService;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -43,5 +45,17 @@ public class PatientController {
     @GetMapping("/me")
     public ResponseEntity<PatientResponse> patientOwnInfo(Authentication authentication){
         return ResponseEntity.ok(patientService.getPatientOwnInfo(authentication));
+    }
+
+    @PutMapping(value="/updatePhoto/{patientId}", consumes= MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<PatientResponse> updatePhoto(@PathVariable String patientId,
+                                                       @RequestPart("photo") MultipartFile photo, Authentication authentication){
+        return ResponseEntity.ok(patientService.updatePatientPhoto(patientId,authentication,photo));
+    }
+
+    @DeleteMapping("/deletePhoto/{patientId}")
+    public ResponseEntity<Void> deletePhoto(@PathVariable String patientId, Authentication authentication){
+        patientService.deletePatientPhoto(patientId,authentication);
+        return ResponseEntity.noContent().build();
     }
 }

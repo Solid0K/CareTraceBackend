@@ -17,6 +17,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,12 +29,16 @@ public class PatientService {
     private final PatientRepo patientRepo;
     private final CareTakerRepo careTakerRepo;
     private final BCryptPasswordEncoder encoder;
+    private final PhotoStorageService photoStorageService;
 
-    public PatientService(UserRepo userRepo, PatientRepo patientRepo, CareTakerRepo careTakerRepo, BCryptPasswordEncoder encoder) {
+    public PatientService(UserRepo userRepo, PatientRepo patientRepo,
+                          CareTakerRepo careTakerRepo,
+                          BCryptPasswordEncoder encoder,PhotoStorageService photoStorageService) {
         this.userRepo = userRepo;
         this.patientRepo = patientRepo;
         this.careTakerRepo = careTakerRepo;
         this.encoder = encoder;
+        this.photoStorageService=photoStorageService;
     }
 
     public PatientResponse createPatient(PatientMakingRequest request, Authentication authentication){
@@ -105,6 +110,44 @@ public class PatientService {
         return mapToPatientResponse(patient,patientUser);
     }
 
+    public PatientResponse updatePatientPhoto(String patientId, Authentication authentication,
+                                              MultipartFile photo_file){
+        Patient patient=getOwnedPatient(patientId,authentication);
+        String oldKey=patient.getPhotoKey();
+        String newKey=photoStorageService.uploadPhoto(photo_file,"patients/"+patientId+"/profile/");
+        Patient savedPatient;
+        patient.setPhotoKey(newKey);
+        try{
+            savedPatient=patientRepo.save(patient);
+        }catch(Exception e){
+            photoStorageService.deletePhoto(newKey);
+            throw e;
+        }
+        photoStorageService.deletePhoto(oldKey);
+        Client patientUser=userRepo.findById(patient.getId()).
+                orElseThrow(()->new NotFoundException("User not found"));
+        return mapToPatientResponse(patient,patientUser);
+    }
+
+    public void deletePatientPhoto(String patientId,Authentication authentication){
+        Patient patient=getOwnedPatient(patientId,authentication);
+        String key=patient.getPhotoKey();
+        patient.setPhotoKey(null);
+        patientRepo.save(patient);
+        photoStorageService.deletePhoto(key);
+    }
+
+    private Patient getOwnedPatient(String patientId, Authentication authentication){
+        CareTaker careTaker=careTakerRepo.findByUserId(authentication.getName())
+                .orElseThrow(()->new NotFoundException("CareTaker not found"));
+        Patient patient=patientRepo.findById(patientId)
+                .orElseThrow(()->new NotFoundException("Patient not found"));
+        if(!patient.getCareTakerId().equals(careTaker.getId())){
+            throw new UnauthorizedException("You not allow to see this Patient");
+        }
+        return patient;
+    }
+
     private PatientResponse mapToPatientResponse(Patient patient,Client patientUser){
         PatientResponse response=new PatientResponse();
         response.setId(patient.getId());
@@ -112,6 +155,7 @@ public class PatientService {
         response.setEmail(patientUser.getEmail());
         response.setPassword(patientUser.getPassword());
         response.setAge(patient.getAge());
+        response.setPhotoUrl(photoStorageService.photoUrl(patient.getPhotoKey()));
         return response;
     }
 }

@@ -11,4 +11,5 @@ public class PatientResponse {
     private Integer age;
     private String email;
     private String password;
+    private String photoUrl;
 }
