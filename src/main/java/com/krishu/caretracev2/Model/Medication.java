@@ -21,4 +21,11 @@ public class Medication{
     private LocalDate startDate;
     private LocalDate endDate;
     private String instructions;
+    private String prescribingDoctor;
+
+    public boolean isActive(LocalDate date){
+        boolean startAt=this.startDate==null || !this.startDate.isAfter(date);
+        boolean endAt=this.endDate==null || !this.endDate.isBefore(date);
+        return startAt && endAt;
+    }
 }

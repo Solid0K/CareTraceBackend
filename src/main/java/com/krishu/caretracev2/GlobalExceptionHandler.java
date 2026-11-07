@@ -82,4 +82,10 @@ public class GlobalExceptionHandler {
         ErrorResponse errorResponse=new ErrorResponse(400,exp.getMessage());
         return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
     }
+
+    @ExceptionHandler(AlreadyAdministrationException.class)
+    public ResponseEntity<ErrorResponse> AlreadyAdministration(AlreadyAdministrationException exp){
+        ErrorResponse errorResponse=new ErrorResponse(409,exp.getMessage());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
+    }
 }

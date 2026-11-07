@@ -15,4 +15,5 @@ public class MedicationResponse {
     private LocalDate startDate;
     private LocalDate endDate;
     private String instructions;
+    private String prescribingDoctor;
 }

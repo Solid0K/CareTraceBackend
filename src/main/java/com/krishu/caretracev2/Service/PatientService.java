@@ -124,7 +124,7 @@ public class PatientService {
             throw e;
         }
         photoStorageService.deletePhoto(oldKey);
-        Client patientUser=userRepo.findById(patient.getId()).
+        Client patientUser=userRepo.findById(patient.getUserId()).
                 orElseThrow(()->new NotFoundException("User not found"));
         return mapToPatientResponse(patient,patientUser);
     }
@@ -153,7 +153,6 @@ public class PatientService {
         response.setId(patient.getId());
         response.setName(patientUser.getName());
         response.setEmail(patientUser.getEmail());
-        response.setPassword(patientUser.getPassword());
         response.setAge(patient.getAge());
         response.setPhotoUrl(photoStorageService.photoUrl(patient.getPhotoKey()));
         return response;

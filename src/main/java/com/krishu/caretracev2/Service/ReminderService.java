@@ -97,6 +97,9 @@ public class ReminderService {
             if(!medication.getPatientId().equals(patientId)){
                 throw new NotRelatedException("Medication does not belong to this Patient");
             }
+            if(request.getTime()==null){
+                throw new IllegalArgumentException("Time is required for a medication reminder");
+            }
         }else if(request.getType()==ReminderType.ROUTINE){
             if (request.getRoutineId() == null) {
                 throw new IllegalArgumentException("Routine ID is required for routine reminder");

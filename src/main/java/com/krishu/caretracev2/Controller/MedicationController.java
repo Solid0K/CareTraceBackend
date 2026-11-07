@@ -29,6 +29,14 @@ public class MedicationController {
         return ResponseEntity.ok(medicationService.getPatientMedications(patientId,authentication));
     }
 
+    @GetMapping("/getMedications/{patientId}")
+    public ResponseEntity<List<MedicationResponse>> getPatientMedicationsSpecific(@PathVariable String patientId,
+                                                                                  Authentication authentication,
+                                                                                  @RequestParam(required=false) Boolean
+                                                                                          active){
+        return ResponseEntity.ok(medicationService.getPatientMedication(patientId,authentication,active));
+    }
+
     @PutMapping("/updateMedication/{patientId}/{medicationId}")
     public ResponseEntity<MedicationResponse> updateMedication(@RequestBody MedicationRequest request,@PathVariable String medicationId,
                                                                @PathVariable String patientId,Authentication authentication){

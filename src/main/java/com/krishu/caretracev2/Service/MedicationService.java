@@ -14,6 +14,8 @@ import com.krishu.caretracev2.Repository.MedicationRepo;
 import com.krishu.caretracev2.Repository.PatientRepo;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
+
+import java.time.LocalDate;
 import java.util.List;
 
 @Service
@@ -29,7 +31,8 @@ public class MedicationService {
         this.careTakerRepo = careTakerRepo;
     }
 
-    public MedicationResponse createMedication(MedicationRequest request, String patientId, Authentication authentication){
+    public MedicationResponse createMedication(MedicationRequest request, String patientId,
+                                               Authentication authentication){
         CareTakerPatientPair pair=careTakerAndPatient(authentication,patientId);
         CareTaker careTaker=pair.getCareTaker();
         Patient patient=pair.getPatient();
@@ -41,6 +44,7 @@ public class MedicationService {
         medication.setInstructions(request.getInstructions());
         medication.setStartDate(request.getStartDate());
         medication.setPatientId(patient.getId());
+        medication.setPrescribingDoctor(request.getPrescribingDoctor());
         Medication savedMedication=medicationRepo.save(medication);
         return mapToMedicationResponse(savedMedication);
     }
@@ -65,6 +69,7 @@ public class MedicationService {
         medication.setFrequency(request.getFrequency());
         medication.setInstructions(request.getInstructions());
         medication.setStartDate(request.getStartDate());
+        medication.setPrescribingDoctor(request.getPrescribingDoctor());
         Medication savedMedication=medicationRepo.save(medication);
         return mapToMedicationResponse(savedMedication);
     }
@@ -84,6 +89,20 @@ public class MedicationService {
         String patientUserId=authentication.getName();
         Patient patient=patientRepo.findByUserId(patientUserId).orElseThrow(()->new NotFoundException("Patient not found"));
         return medicationRepo.findByPatientId(patient.getId()).stream().map(this::mapToMedicationResponse).toList();
+    }
+
+    public List<MedicationResponse> getPatientMedication(String patientId,Authentication authentication,
+                                                         Boolean active){
+        getAuthorizedPatient(patientId,authentication);
+        LocalDate today=LocalDate.now();
+        return medicationRepo.findByPatientId(patientId).stream().filter(m->active==null ||
+                isActive(m,today)==active).map(this::mapToMedicationResponse).toList();
+    }
+
+    private boolean isActive(Medication medication, LocalDate today){
+        boolean startedAt=medication.getStartDate()==null || !medication.getStartDate().isAfter(today);
+        boolean endAt=medication.getEndDate()==null || !medication.getEndDate().isBefore(today);
+        return startedAt && endAt;
     }
 
     private CareTakerPatientPair careTakerAndPatient(Authentication authentication, String patientId){
@@ -115,6 +134,7 @@ public class MedicationService {
         response.setName(medication.getName());
         response.setStartDate(medication.getStartDate());
         response.setId(medication.getId());
+        response.setPrescribingDoctor(medication.getPrescribingDoctor());
         return response;
     }
 }
