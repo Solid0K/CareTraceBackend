@@ -22,6 +22,8 @@ public class Medication{
     private LocalDate endDate;
     private String instructions;
     private String prescribingDoctor;
+    private LocalDate refillDueDate;
+    private LocalDate refillAlertFor;
 
     public boolean isActive(LocalDate date){
         boolean startAt=this.startDate==null || !this.startDate.isAfter(date);

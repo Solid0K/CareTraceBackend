@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Getter
 @Setter
@@ -16,4 +17,5 @@ public class MedicationResponse {
     private LocalDate endDate;
     private String instructions;
     private String prescribingDoctor;
+    private LocalDate refillDueDate;
 }

@@ -45,6 +45,7 @@ public class MedicationService {
         medication.setStartDate(request.getStartDate());
         medication.setPatientId(patient.getId());
         medication.setPrescribingDoctor(request.getPrescribingDoctor());
+        medication.setRefillDueDate(request.getRefillDueDate());
         Medication savedMedication=medicationRepo.save(medication);
         return mapToMedicationResponse(savedMedication);
     }
@@ -70,6 +71,7 @@ public class MedicationService {
         medication.setInstructions(request.getInstructions());
         medication.setStartDate(request.getStartDate());
         medication.setPrescribingDoctor(request.getPrescribingDoctor());
+        medication.setRefillDueDate(request.getRefillDueDate());
         Medication savedMedication=medicationRepo.save(medication);
         return mapToMedicationResponse(savedMedication);
     }
@@ -135,6 +137,7 @@ public class MedicationService {
         response.setStartDate(medication.getStartDate());
         response.setId(medication.getId());
         response.setPrescribingDoctor(medication.getPrescribingDoctor());
+        response.setRefillDueDate(medication.getRefillDueDate());
         return response;
     }
 }
