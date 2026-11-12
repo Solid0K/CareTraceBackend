@@ -7,6 +7,8 @@ import com.krishu.caretracev2.NotificationType;
 import com.krishu.caretracev2.ReminderType;
 import com.krishu.caretracev2.Repository.*;
 import com.krishu.caretracev2.Service.NotificationService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -17,6 +19,8 @@ import java.util.List;
 
 @Component
 public class ReminderScheduler {
+
+    private static final Logger log = LoggerFactory.getLogger(ReminderScheduler.class);
 
     private final ReminderRepo reminderRepo;
     private final PatientRepo patientRepo;
@@ -38,75 +42,17 @@ public class ReminderScheduler {
 
     @Scheduled(fixedRate = 60000)
     public void checkReminder(){
-        LocalDateTime now = LocalDateTime.now();
-
-        LocalDate today = now.toLocalDate();
-        LocalTime currentTime = now.toLocalTime();
 
         List<Reminder> reminders = reminderRepo.findAll();
         for (Reminder reminder : reminders) {
-            if (isAlreadyTriggered(reminder, today)) {
-                continue;
+            try{
+                processReminder(reminder);
+            }catch(NotFoundException e){
+                log.warn("Deleting orphaned reminder {}: {}", reminder.getId(), e.getMessage());
+                reminderRepo.delete(reminder);
+            }catch(RuntimeException e){
+                log.warn("Could not process reminder {}: {}", reminder.getId(), e.getMessage());
             }
-            boolean due = false;
-
-            if (reminder.getType() == ReminderType.ROUTINE) {
-                Routine routine=routineRepo.findById(reminder.getRoutineId()).orElseThrow(()->new NotFoundException("Routine not found"));
-                if (routine.getDays()!= null && routine.getDays().contains(today.getDayOfWeek()) && !currentTime.isBefore(routine.getTime())) {
-                    due = true;
-                }
-            }else if(reminder.getType()==ReminderType.MEDICATION){
-                if(reminder.getTime()!=null && !currentTime.isBefore(reminder.getTime())){
-                    if(reminder.getDate()!=null){
-                        due=today.equals(reminder.getDate());
-                    }else{
-                        Medication medication=medicationRepo.findById(reminder.getMedicationId()).orElse(null);
-                        due=medication!=null && medication.isActive(today);
-                    }
-                }
-            }else {
-                if (reminder.getDate() != null && reminder.getDate().equals(today) && !currentTime.isBefore(reminder.getTime())) {
-                    due = true;
-                }
-            }
-
-            if (!due) {
-                continue;
-            }
-
-            Patient patient = patientRepo.findById(reminder.getPatientId()).orElse(null);
-            if (patient == null) {
-                continue;
-            }
-
-            NotificationType notificationType;
-            if (reminder.getType() == ReminderType.MEDICATION) {
-                notificationType = NotificationType.MEDICATION_REMINDER;
-            } else if (reminder.getType() == ReminderType.ROUTINE) {
-                notificationType = NotificationType.ROUTINE_REMINDER;
-            } else if (reminder.getType() == ReminderType.APPOINTMENT) {
-                notificationType = NotificationType.APPOINTMENT_REMINDER;
-            } else {
-                notificationType = NotificationType.CUSTOM_REMINDER;
-            }
-
-            String message;
-
-            if (notificationType == NotificationType.MEDICATION_REMINDER) {
-                Medication medication = medicationRepo.findById(reminder.getMedicationId())
-                        .orElseThrow(() -> new NotFoundException("Medication not found"));
-                message = "Time to take " + medication.getName() + " - " + medication.getDosage();
-                createPendingAdministration(reminder, medication, today);
-
-            } else if (notificationType == NotificationType.ROUTINE_REMINDER) {
-                message = makeRoutineMessage(reminder);
-
-            } else {
-                message = "You have a " + reminder.getType().name().toLowerCase() + " reminder";
-            }
-            notificationService.createNotification(patient.getId(), patient.getId(), null, notificationType, message);
-            reminder.setLastTriggeredAt(now);
-            reminderRepo.save(reminder);
         }
     }
 
@@ -145,5 +91,74 @@ public class ReminderScheduler {
         administration.setScheduledAt(scheduledAt);
         administration.setStatus(AdministrationStatus.PENDING);
         medicationAdminRepo.save(administration);
+    }
+
+    private void processReminder(Reminder reminder){
+        LocalDateTime now = LocalDateTime.now();
+        LocalDate today = now.toLocalDate();
+        LocalTime currentTime = now.toLocalTime();
+
+        if (isAlreadyTriggered(reminder, today)) {
+            return;
+        }
+        boolean due = false;
+
+        if (reminder.getType() == ReminderType.ROUTINE) {
+            Routine routine=routineRepo.findById(reminder.getRoutineId()).orElseThrow(()->new NotFoundException("Routine not found"));
+            if (routine.getDays()!= null && routine.getDays().contains(today.getDayOfWeek()) && !currentTime.isBefore(routine.getTime())) {
+                due = true;
+            }
+        }else if(reminder.getType()==ReminderType.MEDICATION){
+            if(reminder.getTime()!=null && !currentTime.isBefore(reminder.getTime())){
+                if(reminder.getDate()!=null){
+                    due=today.equals(reminder.getDate());
+                }else{
+                    Medication medication=medicationRepo.findById(reminder.getMedicationId()).orElse(null);
+                    due=medication!=null && medication.isActive(today);
+                }
+            }
+        }else {
+            if (reminder.getDate() != null && reminder.getDate().equals(today) && !currentTime.isBefore(reminder.getTime())) {
+                due = true;
+            }
+        }
+
+        if (!due) {
+            return;
+        }
+
+        Patient patient = patientRepo.findById(reminder.getPatientId()).orElse(null);
+        if (patient == null) {
+            return;
+        }
+
+        NotificationType notificationType;
+        if (reminder.getType() == ReminderType.MEDICATION) {
+            notificationType = NotificationType.MEDICATION_REMINDER;
+        } else if (reminder.getType() == ReminderType.ROUTINE) {
+            notificationType = NotificationType.ROUTINE_REMINDER;
+        } else if (reminder.getType() == ReminderType.APPOINTMENT) {
+            notificationType = NotificationType.APPOINTMENT_REMINDER;
+        } else {
+            notificationType = NotificationType.CUSTOM_REMINDER;
+        }
+
+        String message;
+
+        if (notificationType == NotificationType.MEDICATION_REMINDER) {
+            Medication medication = medicationRepo.findById(reminder.getMedicationId())
+                    .orElseThrow(() -> new NotFoundException("Medication not found"));
+            message = "Time to take " + medication.getName() + " - " + medication.getDosage();
+            createPendingAdministration(reminder, medication, today);
+
+        } else if (notificationType == NotificationType.ROUTINE_REMINDER) {
+            message = makeRoutineMessage(reminder);
+
+        } else {
+            message = "You have a " + reminder.getType().name().toLowerCase() + " reminder";
+        }
+        notificationService.createNotification(patient.getId(), patient.getId(), null, notificationType, message);
+        reminder.setLastTriggeredAt(now);
+        reminderRepo.save(reminder);
     }
 }

@@ -78,6 +78,9 @@ public class ImportantPersonService {
         }
         ImportantPerson importantPerson=importantPersonRepo.findById(importantPersonId)
                 .orElseThrow(()->new NotFoundException("Person not found"));
+        if(!importantPerson.getPatientId().equals(patientId)){
+            throw new NotRelatedException("You are not related to this person");
+        }
         importantPerson.setName(request.getName());
         importantPerson.setRelation(request.getRelation());
         importantPerson.setPhoneNo(request.getPhoneNo());

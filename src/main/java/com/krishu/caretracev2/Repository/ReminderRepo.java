@@ -7,4 +7,6 @@ import java.util.List;
 
 public interface ReminderRepo extends MongoRepository<Reminder,String> {
     List<Reminder> findByPatientId(String patientId);
+    void deleteByMedicationId(String medicationId);
+    void deleteByRoutineId(String routineId);
 }

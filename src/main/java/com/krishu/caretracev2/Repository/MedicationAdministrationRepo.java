@@ -13,4 +13,5 @@ public interface MedicationAdministrationRepo extends MongoRepository<Medication
             String patientId, LocalDateTime from, LocalDateTime to);
 
     List<MedicationAdministration> findByStatusAndScheduledAtBefore(AdministrationStatus status, LocalDateTime time);
+    void deleteByMedicationIdAndStatus(String medicationId,AdministrationStatus status);
 }

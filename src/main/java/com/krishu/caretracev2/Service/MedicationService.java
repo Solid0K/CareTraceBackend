@@ -1,5 +1,6 @@
 package com.krishu.caretracev2.Service;
 
+import com.krishu.caretracev2.AdministrationStatus;
 import com.krishu.caretracev2.CustomExceptions.NotFoundException;
 import com.krishu.caretracev2.CustomExceptions.NotRelatedException;
 import com.krishu.caretracev2.CustomExceptions.UnauthorizedException;
@@ -8,10 +9,9 @@ import com.krishu.caretracev2.DTO.MedicationRequest;
 import com.krishu.caretracev2.DTO.MedicationResponse;
 import com.krishu.caretracev2.Model.CareTaker;
 import com.krishu.caretracev2.Model.Medication;
+import com.krishu.caretracev2.Model.MedicationAdministration;
 import com.krishu.caretracev2.Model.Patient;
-import com.krishu.caretracev2.Repository.CareTakerRepo;
-import com.krishu.caretracev2.Repository.MedicationRepo;
-import com.krishu.caretracev2.Repository.PatientRepo;
+import com.krishu.caretracev2.Repository.*;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
@@ -24,11 +24,17 @@ public class MedicationService {
     private final MedicationRepo medicationRepo;
     private final PatientRepo patientRepo;
     private final CareTakerRepo careTakerRepo;
+    private final ReminderRepo reminderRepo;
+    private final MedicationAdministrationRepo medicationAdministrationRepo;
 
-    public MedicationService(MedicationRepo medicationRepo, PatientRepo patientRepo, CareTakerRepo careTakerRepo) {
+    public MedicationService(MedicationRepo medicationRepo,PatientRepo patientRepo,
+                             CareTakerRepo careTakerRepo,ReminderRepo reminderRepo,
+                             MedicationAdministrationRepo medicationAdministrationRepo) {
         this.medicationRepo = medicationRepo;
         this.patientRepo = patientRepo;
         this.careTakerRepo = careTakerRepo;
+        this.reminderRepo=reminderRepo;
+        this.medicationAdministrationRepo=medicationAdministrationRepo;
     }
 
     public MedicationResponse createMedication(MedicationRequest request, String patientId,
@@ -84,6 +90,8 @@ public class MedicationService {
         if(!medication.getPatientId().equals(patient.getId())){
             throw new NotRelatedException("Medication dont belong the Patient");
         }
+        reminderRepo.deleteByMedicationId(medicationId);
+        medicationAdministrationRepo.deleteByMedicationIdAndStatus(medicationId, AdministrationStatus.PENDING);
         medicationRepo.delete(medication);
     }
 

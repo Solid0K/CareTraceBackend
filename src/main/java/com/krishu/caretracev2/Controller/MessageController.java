@@ -20,7 +20,7 @@ public class MessageController {
     }
 
     @PostMapping("/sendMessage/{patientId}")
-    public ResponseEntity<MessageResponse> sendMessage(@PathVariable String patientId, MessageRequest request, Authentication authentication){
+    public ResponseEntity<MessageResponse> sendMessage(@PathVariable String patientId,@RequestBody MessageRequest request, Authentication authentication){
         return ResponseEntity.ok(messageService.sendMessage(patientId,request,authentication));
     }
 

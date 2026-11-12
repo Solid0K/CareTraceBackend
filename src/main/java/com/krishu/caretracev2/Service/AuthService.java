@@ -58,7 +58,6 @@ public class AuthService {
         response.setId(client.getId());
         response.setName(client.getName());
         response.setEmail(client.getEmail());
-        response.setPassword(client.getPassword());
         return response;
     }
 }

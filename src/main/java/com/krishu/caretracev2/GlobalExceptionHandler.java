@@ -19,7 +19,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<ErrorResponse> BadCredentials(BadCredentialsException exp){
-        ErrorResponse errorResponse=new ErrorResponse(404,exp.getMessage());
+        ErrorResponse errorResponse=new ErrorResponse(500,exp.getMessage());
         return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
     }
 

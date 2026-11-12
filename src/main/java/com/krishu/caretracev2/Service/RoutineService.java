@@ -11,6 +11,7 @@ import com.krishu.caretracev2.Model.Patient;
 import com.krishu.caretracev2.Model.Routine;
 import com.krishu.caretracev2.Repository.CareTakerRepo;
 import com.krishu.caretracev2.Repository.PatientRepo;
+import com.krishu.caretracev2.Repository.ReminderRepo;
 import com.krishu.caretracev2.Repository.RoutineRepo;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -24,11 +25,14 @@ public class RoutineService {
     private final RoutineRepo routineRepo;
     private final PatientRepo patientRepo;
     private final CareTakerRepo careTakerRepo;
+    private final ReminderRepo reminderRepo;
 
-    public RoutineService(RoutineRepo routineRepo, PatientRepo patientRepo, CareTakerRepo careTakerRepo) {
+    public RoutineService(RoutineRepo routineRepo, PatientRepo patientRepo,
+                          CareTakerRepo careTakerRepo,ReminderRepo reminderRepo) {
         this.routineRepo = routineRepo;
         this.patientRepo = patientRepo;
         this.careTakerRepo = careTakerRepo;
+        this.reminderRepo=reminderRepo;
     }
 
     public RoutineResponse createRoutine(RoutineRequest request, String patientId, Authentication authentication){
@@ -75,6 +79,7 @@ public class RoutineService {
         if(!routine.getPatientId().equals(patient.getId())){
             throw new NotRelatedException("Routine does not related the patient");
         }
+        reminderRepo.deleteByRoutineId(routineId);
         routineRepo.delete(routine);
     }
 
