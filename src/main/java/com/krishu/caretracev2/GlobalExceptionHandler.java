@@ -12,80 +12,101 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(UserAlreadyExistsException.class)
-    public ResponseEntity<ErrorResponse> UserAlreadyExists(UserAlreadyExistsException exp){
-        ErrorResponse errorResponse=new ErrorResponse(409,exp.getMessage());
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
+    public ResponseEntity<ErrorResponse> userAlreadyExists(
+            UserAlreadyExistsException exp) {
+
+        ErrorResponse error = new ErrorResponse(409, exp.getMessage());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
     }
 
     @ExceptionHandler(BadCredentialsException.class)
-    public ResponseEntity<ErrorResponse> BadCredentials(BadCredentialsException exp){
-        ErrorResponse errorResponse=new ErrorResponse(500,exp.getMessage());
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
+    public ResponseEntity<ErrorResponse> badCredentials(
+            BadCredentialsException exp) {
+
+        ErrorResponse error = new ErrorResponse(401, exp.getMessage());
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
     }
 
     @ExceptionHandler(NotFoundException.class)
-    public ResponseEntity<ErrorResponse> NotFound(NotFoundException exp){
-        ErrorResponse errorResponse=new ErrorResponse(404,exp.getMessage());
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
+    public ResponseEntity<ErrorResponse> notFound(NotFoundException exp) {
+
+        ErrorResponse error = new ErrorResponse(404, exp.getMessage());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
     }
 
     @ExceptionHandler(UnauthorizedException.class)
-    public ResponseEntity<ErrorResponse> Unauthorized(UnauthorizedException exp){
-        ErrorResponse errorResponse=new ErrorResponse(401,exp.getMessage());
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
+    public ResponseEntity<ErrorResponse> unauthorized(
+            UnauthorizedException exp) {
+
+        ErrorResponse error = new ErrorResponse(401, exp.getMessage());
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
     }
 
     @ExceptionHandler(NotRelatedException.class)
-    public ResponseEntity<ErrorResponse> NotRelated(NotRelatedException exp){
-        ErrorResponse errorResponse=new ErrorResponse(409,exp.getMessage());
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
+    public ResponseEntity<ErrorResponse> notRelated(NotRelatedException exp) {
+
+        ErrorResponse error = new ErrorResponse(403, exp.getMessage());
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error);
     }
 
     @ExceptionHandler(PatientLocationNotKnowException.class)
-    public ResponseEntity<ErrorResponse> PatientLocationNotKnow(PatientLocationNotKnowException exp){
-        ErrorResponse errorResponse=new ErrorResponse(404,exp.getMessage());
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
+    public ResponseEntity<ErrorResponse> patientLocationNotKnow(
+            PatientLocationNotKnowException exp) {
+
+        ErrorResponse error = new ErrorResponse(404, exp.getMessage());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
     }
 
     @ExceptionHandler(AlreadyResolvedAlertException.class)
-    public ResponseEntity<ErrorResponse> AlreadyResolvedAlert(AlreadyResolvedAlertException exp){
-        ErrorResponse errorResponse=new ErrorResponse(409,exp.getMessage());
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
+    public ResponseEntity<ErrorResponse> alreadyResolvedAlert(
+            AlreadyResolvedAlertException exp) {
+
+        ErrorResponse error = new ErrorResponse(409, exp.getMessage());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
     }
 
     @ExceptionHandler(GameAlreadyCompletedException.class)
-    public ResponseEntity<ErrorResponse> GameAlreadyCompleted(GameAlreadyCompletedException exp){
-        ErrorResponse errorResponse=new ErrorResponse(409,exp.getMessage());
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
+    public ResponseEntity<ErrorResponse> gameAlreadyCompleted(
+            GameAlreadyCompletedException exp) {
+
+        ErrorResponse error = new ErrorResponse(409, exp.getMessage());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
     }
 
     @ExceptionHandler(OutOfRangeException.class)
-    public ResponseEntity<ErrorResponse> OutOfRange(OutOfRangeException exp){
-        ErrorResponse errorResponse=new ErrorResponse(400,exp.getMessage());
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
+    public ResponseEntity<ErrorResponse> outOfRange(OutOfRangeException exp) {
+
+        ErrorResponse error = new ErrorResponse(400, exp.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
     }
 
     @ExceptionHandler(GameNotCompleteException.class)
-    public ResponseEntity<ErrorResponse> GameNotComplete(GameNotCompleteException exp){
-        ErrorResponse errorResponse=new ErrorResponse(409,exp.getMessage());
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
+    public ResponseEntity<ErrorResponse> gameNotComplete(
+            GameNotCompleteException exp) {
+
+        ErrorResponse error = new ErrorResponse(409, exp.getMessage());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
     }
 
     @ExceptionHandler(InvalidFileException.class)
-    public ResponseEntity<ErrorResponse> InvalidFile(InvalidFileException exp){
-        ErrorResponse errorResponse=new ErrorResponse(400,exp.getMessage());
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
+    public ResponseEntity<ErrorResponse> invalidFile(InvalidFileException exp) {
+
+        ErrorResponse error = new ErrorResponse(400, exp.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
     }
 
     @ExceptionHandler(WrongQuestionException.class)
-    public ResponseEntity<ErrorResponse> WrongQuestion(WrongQuestionException exp){
-        ErrorResponse errorResponse=new ErrorResponse(400,exp.getMessage());
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
+    public ResponseEntity<ErrorResponse> wrongQuestion(WrongQuestionException exp) {
+
+        ErrorResponse error = new ErrorResponse(400, exp.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
     }
 
     @ExceptionHandler(AlreadyAdministrationException.class)
-    public ResponseEntity<ErrorResponse> AlreadyAdministration(AlreadyAdministrationException exp){
-        ErrorResponse errorResponse=new ErrorResponse(409,exp.getMessage());
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
+    public ResponseEntity<ErrorResponse> alreadyAdministration(
+            AlreadyAdministrationException exp) {
+
+        ErrorResponse error = new ErrorResponse(409, exp.getMessage());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
     }
 }
