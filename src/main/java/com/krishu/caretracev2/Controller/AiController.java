@@ -17,7 +17,7 @@ public class AiController {
         this.aiService=aiService;
     }
 
-    @GetMapping("/ask")
+    @PostMapping("/ask")
     public ResponseEntity<AiResponse> askAnything(Authentication authentication,@RequestBody AiRequest request){
         return ResponseEntity.ok(aiService.chat(request,authentication));
     }

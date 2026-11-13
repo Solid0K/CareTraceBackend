@@ -1,9 +1,6 @@
 package com.krishu.caretracev2.Service;
 
-import com.krishu.caretracev2.CustomExceptions.GameAlreadyCompletedException;
-import com.krishu.caretracev2.CustomExceptions.NotFoundException;
-import com.krishu.caretracev2.CustomExceptions.OutOfRangeException;
-import com.krishu.caretracev2.CustomExceptions.UnauthorizedException;
+import com.krishu.caretracev2.CustomExceptions.*;
 import com.krishu.caretracev2.DTO.PlaceGuesserAnswerRequest;
 import com.krishu.caretracev2.DTO.PlaceGuesserAnswerResponse;
 import com.krishu.caretracev2.DTO.PlaceGuesserQuestionResponse;
@@ -58,7 +55,7 @@ public class PlaceGuesserService {
                                 equals(name)).findFirst().orElseThrow()).toList()));
 
         if(uniquePlace.size()<2){
-            throw new IllegalArgumentException("At least two places with photos and " +
+            throw new WrongQuestionException("At least two places with photos and " +
                     "different names are required");
         }
         Collections.shuffle(uniquePlace);
@@ -103,7 +100,7 @@ public class PlaceGuesserService {
 
         if (options == null || !options.stream()
                 .anyMatch(option -> option.equalsIgnoreCase(answer))) {
-            throw new IllegalArgumentException(
+            throw new NotFoundException(
                     "Answer must be one of the available options");
         }
 
