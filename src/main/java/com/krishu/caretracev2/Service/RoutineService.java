@@ -1,5 +1,8 @@
 package com.krishu.caretracev2.Service;
 
+import com.krishu.caretracev2.ActivityType;
+import com.krishu.caretracev2.CompletionStatus;
+import com.krishu.caretracev2.CustomExceptions.MissingRoutineTimeException;
 import com.krishu.caretracev2.CustomExceptions.NotFoundException;
 import com.krishu.caretracev2.CustomExceptions.NotRelatedException;
 import com.krishu.caretracev2.CustomExceptions.UnauthorizedException;
@@ -9,10 +12,7 @@ import com.krishu.caretracev2.DTO.RoutineResponse;
 import com.krishu.caretracev2.Model.CareTaker;
 import com.krishu.caretracev2.Model.Patient;
 import com.krishu.caretracev2.Model.Routine;
-import com.krishu.caretracev2.Repository.CareTakerRepo;
-import com.krishu.caretracev2.Repository.PatientRepo;
-import com.krishu.caretracev2.Repository.ReminderRepo;
-import com.krishu.caretracev2.Repository.RoutineRepo;
+import com.krishu.caretracev2.Repository.*;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
@@ -26,25 +26,30 @@ public class RoutineService {
     private final PatientRepo patientRepo;
     private final CareTakerRepo careTakerRepo;
     private final ReminderRepo reminderRepo;
+    private final RoutineCompletionRepo routineCompletionRepo;
 
     public RoutineService(RoutineRepo routineRepo, PatientRepo patientRepo,
-                          CareTakerRepo careTakerRepo,ReminderRepo reminderRepo) {
+                          CareTakerRepo careTakerRepo, ReminderRepo reminderRepo
+            ,RoutineCompletionRepo routineCompletionRepo) {
         this.routineRepo = routineRepo;
         this.patientRepo = patientRepo;
         this.careTakerRepo = careTakerRepo;
         this.reminderRepo=reminderRepo;
+        this.routineCompletionRepo=routineCompletionRepo;
     }
 
     public RoutineResponse createRoutine(RoutineRequest request, String patientId, Authentication authentication){
-        CareTakerPatientPair pair=careTakerAndPatient(authentication,patientId);
-        CareTaker careTaker=pair.getCareTaker();
-        Patient patient=pair.getPatient();
+        careTakerAndPatient(authentication,patientId);
+        if(request.getTime()==null){
+            throw new MissingRoutineTimeException("Time is required for Routine");
+        }
         Routine routine=new Routine();
         routine.setTitle(request.getTitle());
         routine.setDays(request.getDays());
         routine.setDescription(request.getDescription());
         routine.setPatientId(patientId);
         routine.setTime(request.getTime());
+        routine.setActivityType((request.getActivityType()!=null)?request.getActivityType(): ActivityType.OTHER);
         Routine savedRoutine=routineRepo.save(routine);
         return mapToRoutineResponse(savedRoutine);
     }
@@ -57,29 +62,32 @@ public class RoutineService {
 
     public RoutineResponse updateRoutine(RoutineRequest request,String routineId,String patientId,Authentication authentication){
         CareTakerPatientPair pair=careTakerAndPatient(authentication,patientId);
-        CareTaker careTaker=pair.getCareTaker();
         Patient patient=pair.getPatient();
         Routine routine=routineRepo.findById(routineId).orElseThrow(()->new NotFoundException("Routine not found"));
         if(!routine.getPatientId().equals(patient.getId())){
             throw new NotRelatedException("Routine does not related the patient");
         }
+        if(request.getTime()==null){
+            throw new MissingRoutineTimeException("Time is required for Routine");
+        }
         routine.setTime(request.getTime());
         routine.setDescription(request.getDescription());
         routine.setDays(request.getDays());
         routine.setTitle(request.getTitle());
+        routine.setActivityType((request.getActivityType()!=null)?request.getActivityType(): ActivityType.OTHER);
         Routine savedRoutine=routineRepo.save(routine);
         return mapToRoutineResponse(savedRoutine);
     }
 
     public void deleteRoutine(String routineId,String patientId,Authentication authentication){
         CareTakerPatientPair pair=careTakerAndPatient(authentication,patientId);
-        CareTaker careTaker=pair.getCareTaker();
         Patient patient=pair.getPatient();
         Routine routine=routineRepo.findById(routineId).orElseThrow(()->new NotFoundException("Routine not found"));
         if(!routine.getPatientId().equals(patient.getId())){
             throw new NotRelatedException("Routine does not related the patient");
         }
         reminderRepo.deleteByRoutineId(routineId);
+        routineCompletionRepo.deleteByRoutineIdAndCompletionStatus(routineId, CompletionStatus.PENDING);
         routineRepo.delete(routine);
     }
 
@@ -116,6 +124,7 @@ public class RoutineService {
         response.setDescription(routine.getDescription());
         response.setTitle(routine.getTitle());
         response.setTime(routine.getTime());
+        response.setActivityType(routine.getActivityType());
         return response;
     }
 }

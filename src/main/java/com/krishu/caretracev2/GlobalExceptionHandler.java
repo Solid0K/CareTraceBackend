@@ -14,7 +14,6 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(UserAlreadyExistsException.class)
     public ResponseEntity<ErrorResponse> userAlreadyExists(
             UserAlreadyExistsException exp) {
-
         ErrorResponse error = new ErrorResponse(409, exp.getMessage());
         return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
     }
@@ -22,7 +21,6 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<ErrorResponse> badCredentials(
             BadCredentialsException exp) {
-
         ErrorResponse error = new ErrorResponse(401, exp.getMessage());
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
     }
@@ -37,14 +35,12 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(UnauthorizedException.class)
     public ResponseEntity<ErrorResponse> unauthorized(
             UnauthorizedException exp) {
-
         ErrorResponse error = new ErrorResponse(401, exp.getMessage());
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
     }
 
     @ExceptionHandler(NotRelatedException.class)
     public ResponseEntity<ErrorResponse> notRelated(NotRelatedException exp) {
-
         ErrorResponse error = new ErrorResponse(403, exp.getMessage());
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error);
     }
@@ -60,7 +56,6 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(AlreadyResolvedAlertException.class)
     public ResponseEntity<ErrorResponse> alreadyResolvedAlert(
             AlreadyResolvedAlertException exp) {
-
         ErrorResponse error = new ErrorResponse(409, exp.getMessage());
         return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
     }
@@ -75,7 +70,6 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(OutOfRangeException.class)
     public ResponseEntity<ErrorResponse> outOfRange(OutOfRangeException exp) {
-
         ErrorResponse error = new ErrorResponse(400, exp.getMessage());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
     }
@@ -83,21 +77,18 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(GameNotCompleteException.class)
     public ResponseEntity<ErrorResponse> gameNotComplete(
             GameNotCompleteException exp) {
-
         ErrorResponse error = new ErrorResponse(409, exp.getMessage());
         return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
     }
 
     @ExceptionHandler(InvalidFileException.class)
     public ResponseEntity<ErrorResponse> invalidFile(InvalidFileException exp) {
-
         ErrorResponse error = new ErrorResponse(400, exp.getMessage());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
     }
 
     @ExceptionHandler(WrongQuestionException.class)
     public ResponseEntity<ErrorResponse> wrongQuestion(WrongQuestionException exp) {
-
         ErrorResponse error = new ErrorResponse(400, exp.getMessage());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
     }
@@ -105,8 +96,14 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(AlreadyAdministrationException.class)
     public ResponseEntity<ErrorResponse> alreadyAdministration(
             AlreadyAdministrationException exp) {
-
         ErrorResponse error = new ErrorResponse(409, exp.getMessage());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+    }
+
+    @ExceptionHandler(MissingRoutineTimeException.class)
+    public ResponseEntity<ErrorResponse> MissingRoutineTime(
+            MissingRoutineTimeException exp) {
+        ErrorResponse error = new ErrorResponse(400, exp.getMessage());
         return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
     }
 }

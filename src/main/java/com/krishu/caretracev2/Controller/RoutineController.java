@@ -40,6 +40,7 @@ public class RoutineController {
         routineService.deleteRoutine(routineId,patientId,authentication);
     }
 
+    @GetMapping("/getPatientRoutine")
     public ResponseEntity<List<RoutineResponse>> getRoutineForPatient(Authentication authentication){
         return ResponseEntity.ok(routineService.getPatientForRoutine(authentication));
     }

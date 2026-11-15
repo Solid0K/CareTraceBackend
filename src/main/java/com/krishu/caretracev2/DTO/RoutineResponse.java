@@ -1,5 +1,6 @@
 package com.krishu.caretracev2.DTO;
 
+import com.krishu.caretracev2.ActivityType;
 import com.krishu.caretracev2.Day;
 import lombok.Getter;
 import lombok.Setter;
@@ -16,4 +17,5 @@ public class RoutineResponse {
     private String description;
     private LocalTime time;
     private List<Day> days;
+    private ActivityType activityType;
 }

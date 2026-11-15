@@ -1,5 +1,7 @@
 package com.krishu.caretracev2;
 
+import java.time.DayOfWeek;
+
 public enum Day {
     MONDAY,
     TUESDAY,
@@ -7,5 +9,9 @@ public enum Day {
     THURSDAY,
     FRIDAY,
     SATURDAY,
-    SUNDAY
+    SUNDAY;
+
+    public static Day from(DayOfWeek day){
+        return Day.valueOf(day.name());
+    }
 }

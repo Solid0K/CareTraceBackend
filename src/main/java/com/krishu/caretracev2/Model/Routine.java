@@ -1,5 +1,6 @@
 package com.krishu.caretracev2.Model;
 
+import com.krishu.caretracev2.ActivityType;
 import com.krishu.caretracev2.Day;
 import lombok.Getter;
 import lombok.Setter;
@@ -21,4 +22,5 @@ public class Routine {
     private String description;
     private LocalTime time;
     private List<Day> days=new ArrayList<>();
+    private ActivityType activityType;
 }

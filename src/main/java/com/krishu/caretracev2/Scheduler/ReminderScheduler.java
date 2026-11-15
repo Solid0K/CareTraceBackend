@@ -2,6 +2,7 @@ package com.krishu.caretracev2.Scheduler;
 
 import com.krishu.caretracev2.AdministrationStatus;
 import com.krishu.caretracev2.CustomExceptions.NotFoundException;
+import com.krishu.caretracev2.Day;
 import com.krishu.caretracev2.Model.*;
 import com.krishu.caretracev2.NotificationType;
 import com.krishu.caretracev2.ReminderType;
@@ -29,7 +30,8 @@ public class ReminderScheduler {
     private final MedicationRepo medicationRepo;
     private final MedicationAdministrationRepo medicationAdminRepo;
 
-    public ReminderScheduler(ReminderRepo reminderRepo, PatientRepo patientRepo, NotificationService notificationService,
+    public ReminderScheduler(ReminderRepo reminderRepo, PatientRepo patientRepo,
+                             NotificationService notificationService,
                              RoutineRepo routineRepo, MedicationRepo medicationRepo,
                              MedicationAdministrationRepo medicationAdminRepo) {
         this.reminderRepo = reminderRepo;
@@ -64,12 +66,14 @@ public class ReminderScheduler {
     }
 
     private String makeMedicationMessage(Reminder reminder) {
-        Medication medication = medicationRepo.findById(reminder.getMedicationId()).orElseThrow(() -> new NotFoundException("Medication not found"));
+        Medication medication = medicationRepo.findById(reminder.getMedicationId()).orElseThrow(()
+                -> new NotFoundException("Medication not found"));
         return "Time to take " + medication.getName() + " - " + medication.getDosage();
     }
 
     private String makeRoutineMessage(Reminder reminder) {
-        Routine routine = routineRepo.findById(reminder.getRoutineId()).orElseThrow(() -> new NotFoundException("Routine not found"));
+        Routine routine = routineRepo.findById(reminder.getRoutineId()).orElseThrow(()
+                -> new NotFoundException("Routine not found"));
         String message = "Time for " + routine.getTitle();
         if (routine.getDescription() != null && !routine.getDescription().isBlank()) {
             message += ". " + routine.getDescription();
@@ -104,8 +108,10 @@ public class ReminderScheduler {
         boolean due = false;
 
         if (reminder.getType() == ReminderType.ROUTINE) {
-            Routine routine=routineRepo.findById(reminder.getRoutineId()).orElseThrow(()->new NotFoundException("Routine not found"));
-            if (routine.getDays()!= null && routine.getDays().contains(today.getDayOfWeek()) && !currentTime.isBefore(routine.getTime())) {
+            Routine routine=routineRepo.findById(reminder.getRoutineId()).orElseThrow(()
+                    ->new NotFoundException("Routine not found"));
+            if (routine.getDays()!= null && routine.getDays().contains(Day.from(today.getDayOfWeek()))
+                    && !currentTime.isBefore(routine.getTime())) {
                 due = true;
             }
         }else if(reminder.getType()==ReminderType.MEDICATION){
@@ -118,7 +124,8 @@ public class ReminderScheduler {
                 }
             }
         }else {
-            if (reminder.getDate() != null && reminder.getDate().equals(today) && !currentTime.isBefore(reminder.getTime())) {
+            if (reminder.getDate() != null && reminder.getDate().equals(today) &&
+                    !currentTime.isBefore(reminder.getTime())) {
                 due = true;
             }
         }
@@ -157,7 +164,8 @@ public class ReminderScheduler {
         } else {
             message = "You have a " + reminder.getType().name().toLowerCase() + " reminder";
         }
-        notificationService.createNotification(patient.getId(), patient.getId(), null, notificationType, message);
+        notificationService.createNotification(patient.getId(), patient.getId(),
+                null, notificationType, message);
         reminder.setLastTriggeredAt(now);
         reminderRepo.save(reminder);
     }
