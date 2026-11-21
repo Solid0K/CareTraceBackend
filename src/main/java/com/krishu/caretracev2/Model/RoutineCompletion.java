@@ -26,5 +26,6 @@ public class RoutineCompletion {
     private ClientRole completedByRole;
     private String completedByUserId;
     private Boolean careTakerConfirmed=false;
+    private LocalDateTime confirmAt;
     private String note;
 }

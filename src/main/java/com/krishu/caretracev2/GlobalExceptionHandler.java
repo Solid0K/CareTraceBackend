@@ -106,4 +106,11 @@ public class GlobalExceptionHandler {
         ErrorResponse error = new ErrorResponse(400, exp.getMessage());
         return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
     }
+
+    @ExceptionHandler(InvalidStateException.class)
+    public ResponseEntity<ErrorResponse> InvalidState(
+            InvalidStateException exp) {
+        ErrorResponse error = new ErrorResponse(409, exp.getMessage());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+    }
 }
