@@ -92,6 +92,19 @@ public class RoutineCompletionService {
         return buildSchedule(patientId,(date!=null)?date:LocalDate.now());
     }
 
+    public List<ActivityResponse> getHistory(String patientId,ActivityType type,CompletionStatus status,LocalDate from
+            ,LocalDate to,Authentication authentication){
+        checkAccess(patientId,authentication);
+        return query(patientId,status ,type,from,to,LocalDate.now().minusDays(30));
+    }
+
+    public List<ActivityResponse> getMyHistory(ActivityType type,CompletionStatus status,LocalDate from,LocalDate to
+            ,Authentication authentication){
+        Patient patient=patientRepo.findByUserId(authentication.getName()).
+                orElseThrow(()->new NotFoundException("Patient not found"));
+        return query(patient.getId(),status,type,from,to,LocalDate.now().minusDays(7));
+    }
+
     private ClientRole checkAccess(String patientId, Authentication authentication){
         Optional<Patient> optionalPatient=patientRepo.findByUserId(authentication.getName());
         if(optionalPatient.isPresent()){
@@ -134,6 +147,21 @@ public class RoutineCompletionService {
         }
         schedule.sort(Comparator.comparing(ActivityResponse::getScheduledAt));
         return schedule;
+    }
+
+    private List<ActivityResponse> query(String patientId,CompletionStatus status,ActivityType type,LocalDate from
+            ,LocalDate to,LocalDate defaultDate){
+        LocalDate start=(from!=null)?from:defaultDate;
+        LocalDate end=(to!=null)?to:LocalDate.now();
+
+        return routineCompletionRepo.findByPatientIdAndScheduledAtBetween(patientId,
+                        start.atStartOfDay().minusSeconds(1), end.plusDays(1).atStartOfDay())
+                .stream()
+                .filter(c->status==null || c.getCompletionStatus()==status)
+                .filter(c->type==null || c.getActivityType()==type)
+                .sorted(Comparator.comparing(RoutineCompletion::getScheduledAt).reversed())
+                .map(this::mapToResponse)
+                .toList();
     }
 
     private ActivityResponse mapToResponse(RoutineCompletion activity){
