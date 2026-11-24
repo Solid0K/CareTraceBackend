@@ -11,15 +11,5 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 public class ActivityRequest {
-    private String completionId;
-    private String routineId;
-    private String title;
-    private ActivityType activityType;
-    private LocalDateTime scheduledAt;
-    private CompletionStatus status;
-    private LocalDateTime completedAt;
-    private ClientRole completedByRole;
-    private Boolean careTakerConfirmed;
-    private LocalDateTime confirmedAt;
     private String note;
 }
