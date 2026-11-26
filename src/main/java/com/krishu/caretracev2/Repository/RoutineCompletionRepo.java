@@ -12,4 +12,5 @@ public interface RoutineCompletionRepo extends MongoRepository<RoutineCompletion
     void deleteByRoutineIdAndCompletionStatus(String routineId, CompletionStatus status);
     List<RoutineCompletion> findByPatientIdAndScheduledAtBetween(String patientId, LocalDateTime from
             , LocalDateTime to);
+    List<RoutineCompletion> findByCompletionStatusAndScheduledAtBefore(CompletionStatus status,LocalDateTime time);
 }

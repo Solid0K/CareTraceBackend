@@ -41,7 +41,7 @@ public class MissedDoseScheduler {
     public void markMissedDose(){
         LocalDateTime cutOff=LocalDateTime.now().minusMinutes(graceMinute);
         List<MedicationAdministration> missedDosage=medicationAdminRepo.
-                findByStatusAndScheduledAtBefore(AdministrationStatus.MISSED,cutOff);
+                findByStatusAndScheduledAtBefore(AdministrationStatus.PENDING,cutOff);
             for(MedicationAdministration dose:missedDosage){
                 try{
                     Patient patient=patientRepo.findById(dose.getPatientId()).orElse(null);
