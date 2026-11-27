@@ -29,7 +29,7 @@ public class MedicationController {
         return ResponseEntity.ok(medicationService.getPatientMedications(patientId,authentication));
     }
 
-    @GetMapping("/getMedications/{patientId}")
+    @GetMapping("/getMedicationsSpecific/{patientId}")
     public ResponseEntity<List<MedicationResponse>> getPatientMedicationsSpecific(@PathVariable String patientId,
                                                                                   Authentication authentication,
                                                                                   @RequestParam(required=false) Boolean

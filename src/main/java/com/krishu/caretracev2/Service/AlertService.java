@@ -31,7 +31,8 @@ public class AlertService {
     private final NotificationService notificationService;
     private final PatientRepo patientRepo;
 
-    public AlertService(AlertRepo alertRepo, GeoFencingService geofenceService, CareTakerRepo careTakerRepo, NotificationService notificationService, PatientRepo patientRepo) {
+    public AlertService(AlertRepo alertRepo, GeoFencingService geofenceService, CareTakerRepo careTakerRepo,
+                        NotificationService notificationService, PatientRepo patientRepo) {
         this.alertRepo = alertRepo;
         this.geofenceService = geofenceService;
         this.careTakerRepo = careTakerRepo;
@@ -41,13 +42,21 @@ public class AlertService {
 
     public AlertResponse checkGeoFenceAlert(String patientId){
         GeoFenceResponse response=geofenceService.checkPatientGeoFence(patientId);
-        Optional<Alert> activeAlert=alertRepo.findByPatientIdAndTypeAndStatus(patientId, AlertType.GEOFENCE_BREACH, AlertStatus.ACTIVE);
-        if(response.getInsideAnySafeLocation()){
+        Optional<Alert> activeAlert=alertRepo.
+                findByPatientIdAndTypeAndStatus(patientId, AlertType.GEOFENCE_BREACH, AlertStatus.ACTIVE);
+        boolean safe=response.getStatues().isEmpty() || response.getInsideAnySafeLocation();
+        if(safe){
             if(activeAlert.isPresent()){
                 Alert alert=activeAlert.get();
                 alert.setStatus(AlertStatus.RESOLVED);
                 alert.setResolvedAt(LocalDateTime.now());
-                return mapToAlertResponse(alertRepo.save(alert));
+                Alert resolvedAlert=alertRepo.save(alert);
+
+                patientRepo.findById(patientId).ifPresent(patient ->
+                        notificationService.createNotification(patient.getCareTakerId(), patientId,
+                                resolvedAlert.getId(),
+                        NotificationType.GEOFENCE_RESOLVED, "Patient is back inside a safe location"));
+                return mapToAlertResponse(resolvedAlert);
             }
             return null;
         }
@@ -68,8 +77,10 @@ public class AlertService {
     }
 
     public AlertResponse createSoSAlert(Authentication authentication){
-        Patient patient=patientRepo.findByUserId(authentication.getName()).orElseThrow(()->new NotFoundException("Patient not found"));
-        Optional<Alert> activeAlert=alertRepo.findByPatientIdAndTypeAndStatus(patient.getId(), AlertType.SOS, AlertStatus.ACTIVE);
+        Patient patient=patientRepo.findByUserId(authentication.getName()).orElseThrow(()->
+                new NotFoundException("Patient not found"));
+        Optional<Alert> activeAlert=alertRepo.
+                findByPatientIdAndTypeAndStatus(patient.getId(), AlertType.SOS, AlertStatus.ACTIVE);
         if(activeAlert.isPresent()){
             return mapToAlertResponse(activeAlert.get());
         }
@@ -86,7 +97,8 @@ public class AlertService {
     }
 
     public List<AlertResponse> getPatientsAlerts(Authentication authentication) {
-        CareTaker careTaker=careTakerRepo.findByUserId(authentication.getName()).orElseThrow(()->new NotFoundException("Caretaker not found"));
+        CareTaker careTaker=careTakerRepo.findByUserId(authentication.getName()).orElseThrow(()->
+                new NotFoundException("Caretaker not found"));
         List<String> patientIds=careTaker.getPatientIds();
         List<Alert> alerts=new ArrayList<>();
         for(String patientId:patientIds){
@@ -98,8 +110,10 @@ public class AlertService {
 
     public AlertResponse ResolveSoSAlert(String alertId,Authentication authentication){
         Alert alert=alertRepo.findById(alertId).orElseThrow(()->new NotFoundException("Alert not found"));
-        CareTaker careTaker=careTakerRepo.findByUserId(authentication.getName()).orElseThrow(()->new NotFoundException("CareTaker not found"));
-        Patient patient=patientRepo.findById(alert.getPatientId()).orElseThrow(()->new NotFoundException("Patient not found"));
+        CareTaker careTaker=careTakerRepo.findByUserId(authentication.getName()).orElseThrow(()->
+                new NotFoundException("CareTaker not found"));
+        Patient patient=patientRepo.findById(alert.getPatientId()).orElseThrow(()->
+                new NotFoundException("Patient not found"));
         if(!patient.getCareTakerId().equals(careTaker.getId())){
             throw new NotRelatedException("This alert is not from your patient so you cant resolve it");
         }
@@ -118,6 +132,9 @@ public class AlertService {
         response.setPatientId(alert.getPatientId());
         response.setMessage(alert.getMessage());
         response.setType(alert.getType());
+        response.setStatus(alert.getStatus());
+        response.setCreatedAt(alert.getCreatedAt());
+        response.setResolvedAt(alert.getResolvedAt());
         return response;
     }
 }

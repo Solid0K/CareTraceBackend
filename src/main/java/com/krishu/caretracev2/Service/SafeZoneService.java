@@ -3,6 +3,7 @@ package com.krishu.caretracev2.Service;
 import com.krishu.caretracev2.CustomExceptions.NotFoundException;
 import com.krishu.caretracev2.CustomExceptions.NotRelatedException;
 import com.krishu.caretracev2.CustomExceptions.UnauthorizedException;
+import com.krishu.caretracev2.DTO.SafeLocationRequest;
 import com.krishu.caretracev2.DTO.SafeLocationResponse;
 import com.krishu.caretracev2.Model.CareTaker;
 import com.krishu.caretracev2.Model.Patient;
@@ -28,8 +29,10 @@ public class SafeZoneService {
         this.careTakerRepo = careTakerRepo;
     }
 
-    public SafeLocationResponse createSafeZone(String patientId, SafeLocationResponse request, Authentication authentication) {
+    public SafeLocationResponse createSafeZone(String patientId, SafeLocationRequest request,
+                                               Authentication authentication) {
         Patient patient = getAuthorizedPatient(patientId, authentication);
+        validate(request);
 
         SafeZone safeZone = new SafeZone();
         safeZone.setPatientId(patient.getId());
@@ -43,14 +46,23 @@ public class SafeZoneService {
         return mapToResponse(savedSafeZone);
     }
 
-    public List<SafeLocationResponse> getSafeZones(String patientId) {
+    public List<SafeLocationResponse> getSafeZones(String patientId,Authentication authentication) {
+        getAuthorizedPatient(patientId,authentication);
         return safeZoneRepo.findByPatientId(patientId).stream().map(this::mapToResponse).toList();
     }
 
-    public SafeLocationResponse updateSafeZone(String patientId, String safeZoneId, SafeLocationResponse request, Authentication authentication) {
+    public List<SafeLocationResponse> getMySafeZones(Authentication authentication){
+        Patient patient=patientRepo.findByUserId(authentication.getName()).orElseThrow(()
+                ->new NotFoundException("Patient not found"));
+        return safeZoneRepo.findByPatientId(patient.getId()).stream().map(this::mapToResponse).toList();
+    }
+
+    public SafeLocationResponse updateSafeZone(String patientId, String safeZoneId, SafeLocationResponse request,
+                                               Authentication authentication) {
         getAuthorizedPatient(patientId, authentication);
 
-        SafeZone safeZone = safeZoneRepo.findById(safeZoneId).orElseThrow(() -> new NotFoundException("Safe zone not found"));
+        SafeZone safeZone = safeZoneRepo.findById(safeZoneId).orElseThrow(() ->
+                new NotFoundException("Safe zone not found"));
         if (!safeZone.getPatientId().equals(patientId)) {
             throw new NotRelatedException("Safe zone does not belong to this patient");
         }
@@ -73,12 +85,29 @@ public class SafeZoneService {
     }
 
     private Patient getAuthorizedPatient(String patientId, Authentication authentication) {
-        CareTaker careTaker = careTakerRepo.findByUserId(authentication.getName()).orElseThrow(() -> new NotFoundException("CareTaker not found"));
-        Patient patient = patientRepo.findById(patientId).orElseThrow(() -> new NotFoundException("Patient not found"));
+        CareTaker careTaker = careTakerRepo.findByUserId(authentication.getName()).orElseThrow(() ->
+                new NotFoundException("CareTaker not found"));
+        Patient patient = patientRepo.findById(patientId).orElseThrow(() ->
+                new NotFoundException("Patient not found"));
         if (!patient.getCareTakerId().equals(careTaker.getId())) {
             throw new UnauthorizedException("You are not authorized for this patient");
         }
         return patient;
+    }
+
+    private void validate(SafeLocationRequest request){
+        if(request.getName()==null || request.getName().isBlank()){
+            throw new IllegalArgumentException("Name is required");
+        }
+        if(request.getLatitude()==null || request.getLatitude()<-90 || request.getLatitude()>90){
+            throw new IllegalArgumentException("Latitude must be between -90 and 90");
+        }
+        if(request.getLongitude()==null || request.getLongitude()<-180 || request.getLongitude()>180){
+            throw new IllegalArgumentException("Longitude must be between -180 and 180");
+        }
+        if(request.getRadius()==null || request.getRadius()<50){
+            throw new IllegalArgumentException("Radius must be at least 50 metres");   // GPS is rarely more accurate
+        }
     }
 
     private SafeLocationResponse mapToResponse(SafeZone safeZone) {
