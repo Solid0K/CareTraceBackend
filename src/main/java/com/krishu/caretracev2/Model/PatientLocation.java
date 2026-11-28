@@ -6,6 +6,8 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Setter
 @Getter
@@ -17,4 +19,5 @@ public class PatientLocation {
     private Double latitude;
     private Double longitude;
     private LocalDateTime updatedAt;
+    private List<String> insideZoneIds=new ArrayList<>();
 }

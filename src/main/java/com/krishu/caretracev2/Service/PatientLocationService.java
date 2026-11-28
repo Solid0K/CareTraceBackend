@@ -3,18 +3,14 @@ package com.krishu.caretracev2.Service;
 import com.krishu.caretracev2.CustomExceptions.NotFoundException;
 import com.krishu.caretracev2.CustomExceptions.PatientLocationNotKnowException;
 import com.krishu.caretracev2.CustomExceptions.UnauthorizedException;
+import com.krishu.caretracev2.DTO.LocationEventResponse;
 import com.krishu.caretracev2.DTO.LocationHistoryResponse;
 import com.krishu.caretracev2.DTO.PatientLocationRequest;
 import com.krishu.caretracev2.DTO.PatientLocationResponse;
 import com.krishu.caretracev2.GeoUtils;
-import com.krishu.caretracev2.Model.CareTaker;
-import com.krishu.caretracev2.Model.LocationHistory;
-import com.krishu.caretracev2.Model.Patient;
-import com.krishu.caretracev2.Model.PatientLocation;
-import com.krishu.caretracev2.Repository.CareTakerRepo;
-import com.krishu.caretracev2.Repository.LocationHistoryRepo;
-import com.krishu.caretracev2.Repository.PatientLocationRepo;
-import com.krishu.caretracev2.Repository.PatientRepo;
+import com.krishu.caretracev2.LocationEventType;
+import com.krishu.caretracev2.Model.*;
+import com.krishu.caretracev2.Repository.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -35,6 +31,8 @@ public class PatientLocationService {
     private final AlertService alertService;
     private final CareTakerRepo careTakerRepo;
     private final LocationHistoryRepo locationHistoryRepo;
+    private final GeoFencingService geoFencingService;
+    private final LocationEventRepo locationEventRepo;
 
     // History settings. These three have NO default value here, so all three must exist in
     // application.properties or the application will not start.
@@ -51,12 +49,16 @@ public class PatientLocationService {
 
     public PatientLocationService(PatientLocationRepo patientLocationRepo, PatientRepo patientRepo,
                                   AlertService alertService,
-                                  CareTakerRepo careTakerRepo,LocationHistoryRepo locationHistoryRepo) {
+                                  CareTakerRepo careTakerRepo, LocationHistoryRepo locationHistoryRepo,
+                                  GeoFencingService geoFencingService,
+                                  LocationEventRepo locationEventRepo) {
         this.patientLocationRepo = patientLocationRepo;
         this.patientRepo = patientRepo;
         this.alertService = alertService;
         this.careTakerRepo = careTakerRepo;
         this.locationHistoryRepo=locationHistoryRepo;
+        this.geoFencingService = geoFencingService;
+        this.locationEventRepo=locationEventRepo;
     }
 
     /**
@@ -82,6 +84,11 @@ public class PatientLocationService {
         location.setLatitude(request.getLatitude());
         location.setLongitude(request.getLongitude());
         location.setUpdatedAt(LocalDateTime.now());
+        try {
+            geoFencingService.trackZones(location);     // fills location.insideZoneIds and records events
+        } catch (RuntimeException e) {
+            log.warn("Could not track zones for patient {}: {}", patient.getId(), e.getMessage());
+        }
         PatientLocation savedLocation = patientLocationRepo.save(location);
         // History is best effort: if recording fails it is only logged, so a history problem can
         // never block the location update or the safety alert below.
@@ -139,6 +146,21 @@ public class PatientLocationService {
             response.setRecordedAt(point.getRecordedAt());
             return response;
         }).toList();
+    }
+
+    public List<LocationEventResponse> getLocationEvents(String patientId,String zoneId, LocalDateTime from,
+                                                         LocalDateTime to,Authentication authentication,
+                                                         LocationEventType type){
+        getAuthorizedPatient(patientId,authentication);
+        LocalDateTime start=(from!=null)?from:LocalDateTime.now().minusDays(7);
+        LocalDateTime end=(to!=null)?to:LocalDateTime.now();
+
+        return locationEventRepo.findByPatientIdAndOccurredAtBetweenOrderByOccurredAtDesc(patientId,start,end)
+                .stream()
+                .filter(e->zoneId==null || zoneId.equals(e.getSafeZoneId()))
+                .filter(e->type==null || e.getType()==type)
+                .map(this::mapToEventResponse)
+                .toList();
     }
 
     // Converts the stored document into the response sent to the app.
@@ -200,6 +222,17 @@ public class PatientLocationService {
         point.setLongitude(longitude);
         point.setRecordedAt(time);
         locationHistoryRepo.save(point);
+    }
+
+    private LocationEventResponse mapToEventResponse(LocationEvent locationEvent){
+        LocationEventResponse response=new LocationEventResponse();
+        response.setSafeZoneId(locationEvent.getSafeZoneId());
+        response.setZoneName(locationEvent.getZoneName());
+        response.setType(locationEvent.getType());
+        response.setLatitude(locationEvent.getLatitude());
+        response.setLongitude(locationEvent.getLongitude());
+        response.setOccurredAt(locationEvent.getOccurredAt());
+        return response;
     }
 }
 
